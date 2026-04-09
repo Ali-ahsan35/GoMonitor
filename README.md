@@ -236,6 +236,4 @@ Generate some traffic first (run test requests), then capture profile again.
 - Export summary as CSV/JSON
 - WebSocket live updates during test runs
 
-## License
 
-Add your preferred license file (MIT/Apache-2.0/etc.) and update this section.
