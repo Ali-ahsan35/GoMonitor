@@ -2,7 +2,9 @@ package main
 
 import (
 	"log"
+	"os"
 	"runtime"
+	"strings"
 	"time"
 
 	"github.com/gin-contrib/cors"
@@ -19,12 +21,19 @@ func main() {
 	runtime.SetMutexProfileFraction(1)
 	runtime.SetBlockProfileRate(1)
 
+	port := strings.TrimSpace(os.Getenv("PORT"))
+	if port == "" {
+		port = "8080"
+	}
+
+	allowedOrigins := resolveAllowedOrigins()
+
 	router := gin.Default()
 
 	router.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"http://localhost:5173"},
+		AllowOrigins:     allowedOrigins,
 		AllowMethods:     []string{"GET", "POST", "OPTIONS"},
-		AllowHeaders:     []string{"Origin", "Content-Type", "Accept"},
+		AllowHeaders:     []string{"Origin", "Content-Type", "Accept", "Authorization", "X-Requested-With", "X-Api-Key"},
 		AllowCredentials: false,
 		MaxAge:           12 * time.Hour,
 	}))
@@ -45,8 +54,31 @@ func main() {
 		c.JSON(200, gin.H{"status": "ok"})
 	})
 
-	log.Println("GoMonitor backend listening on :8080")
-	if err := router.Run(":8080"); err != nil {
+	log.Printf("GoMonitor backend listening on :%s", port)
+	if err := router.Run(":" + port); err != nil {
 		log.Fatalf("failed to start server: %v", err)
 	}
+}
+
+func resolveAllowedOrigins() []string {
+	originEnv := strings.TrimSpace(os.Getenv("FRONTEND_ORIGIN"))
+	if originEnv == "" {
+		return []string{"http://localhost:5173"}
+	}
+
+	parts := strings.Split(originEnv, ",")
+	origins := make([]string, 0, len(parts))
+	for _, part := range parts {
+		origin := strings.TrimSpace(part)
+		if origin == "" {
+			continue
+		}
+		origins = append(origins, origin)
+	}
+
+	if len(origins) == 0 {
+		return []string{"http://localhost:5173"}
+	}
+
+	return origins
 }

@@ -2,6 +2,8 @@ package handler
 
 import (
 	"net/http"
+	"net/textproto"
+	"os"
 	"strings"
 
 	"github.com/gin-gonic/gin"
@@ -32,6 +34,7 @@ func (h *TestHandler) RunTest(c *gin.Context) {
 	}
 
 	headers := normalizeHeaders(req.Headers)
+	headers = applyDefaultHeaders(headers)
 
 	response := h.service.RunTest(c.Request.Context(), urls, headers)
 	c.JSON(http.StatusOK, response)
@@ -56,7 +59,7 @@ func normalizeHeaders(headers map[string]string) map[string]string {
 
 	cleaned := make(map[string]string, len(headers))
 	for k, v := range headers {
-		key := strings.TrimSpace(k)
+		key := textproto.CanonicalMIMEHeaderKey(strings.TrimSpace(k))
 		value := strings.TrimSpace(v)
 		if key == "" || value == "" {
 			continue
@@ -69,4 +72,37 @@ func normalizeHeaders(headers map[string]string) map[string]string {
 	}
 
 	return cleaned
+}
+
+func applyDefaultHeaders(headers map[string]string) map[string]string {
+	result := headers
+	if result == nil {
+		result = map[string]string{}
+	}
+
+	defaultAPIKey := strings.TrimSpace(os.Getenv("SERVER_API_KEY"))
+	if defaultAPIKey != "" && !hasHeaderKey(result, "X-Api-Key") {
+		result["X-Api-Key"] = defaultAPIKey
+	}
+
+	defaultRequestedWith := strings.TrimSpace(os.Getenv("SERVER_X_REQUESTED_WITH"))
+	if defaultRequestedWith != "" && !hasHeaderKey(result, "X-Requested-With") {
+		result["X-Requested-With"] = defaultRequestedWith
+	}
+
+	if len(result) == 0 {
+		return nil
+	}
+
+	return result
+}
+
+func hasHeaderKey(headers map[string]string, key string) bool {
+	canonical := textproto.CanonicalMIMEHeaderKey(key)
+	for k := range headers {
+		if textproto.CanonicalMIMEHeaderKey(k) == canonical {
+			return true
+		}
+	}
+	return false
 }
