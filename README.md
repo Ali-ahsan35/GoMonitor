@@ -4,6 +4,8 @@ A full-stack API performance and profiling dashboard built with Go and React.
 
 Repository: https://github.com/Ali-ahsan35/GoMonitor
 
+Live Frontend: https://gomonitor.netlify.app
+
 ## What This Project Does
 
 GoMonitor helps you test multiple APIs at once and understand both:
@@ -235,33 +237,5 @@ Generate some traffic first (run test requests), then capture profile again.
 - Compare multiple runs over time
 - Export summary as CSV/JSON
 - WebSocket live updates during test runs
-
-## Deployment Notes (Render + Vercel/Netlify)
-
-You can deploy backend first, then frontend.
-
-Recommended order:
-
-1. Deploy backend to Render.
-2. Deploy frontend to Vercel or Netlify.
-3. Update backend `FRONTEND_ORIGIN` with your frontend production URL.
-
-### Backend environment variables (Render)
-
-- `PORT`: provided automatically by Render. The app now reads it.
-- `FRONTEND_ORIGIN`: comma-separated allowed origins for CORS.
-	- Example: `https://your-app.vercel.app`
-	- Multiple: `https://your-app.vercel.app,https://your-app.netlify.app`
-- `GIN_MODE`: set to `release` in production.
-
-Optional secure header variables (to avoid exposing API keys in frontend):
-
-- `SERVER_API_KEY`: default `x-api-key` used by backend when client does not provide one.
-- `SERVER_X_REQUESTED_WITH`: default `X-Requested-With` used by backend when missing.
-
-### Frontend environment variable (Vercel/Netlify)
-
-- `VITE_API_BASE_URL`: your Render backend URL.
-	- Example: `https://gomonitor-api.onrender.com`
 
 
